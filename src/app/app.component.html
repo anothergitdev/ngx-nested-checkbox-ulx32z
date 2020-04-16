@@ -1,0 +1,40 @@
+
+<h4>Nested Form Type 1</h4>
+<div>
+  <form [formGroup]="mainForm">
+    <ul>
+      <!-- MAIN -->
+      <li>
+        <input  type="checkbox" formControlName="all"/>
+          all
+      </li>
+      <ul formArrayName="views">
+        <!-- VIEWS -->
+          <li *ngFor="let view of objData; let vi=index" >
+            <div formGroupName="{{vi}}">
+                <span>
+                  <input  type="checkbox" formControlName="checked"/>
+                  {{ vi + '-' + view.id }}
+                </span>
+              <!-- OPTIONS -->
+              <ul formArrayName="options">
+                <li *ngFor="let option of view.options; let oi=index">
+                  <div formGroupName="{{oi}}">
+                    <span>
+                      <input type="checkbox" formControlName="checked"/>
+                      {{ oi + '-' + option.oid }}
+                    </span>
+                  </div>
+              </ul>
+            </div>
+      </ul>
+    </ul>
+  </form>
+</div>
+<hr>
+<span>{{mainForm.value | json}}</span>
+<hr>
+<span>{{mainFormResult | json}}</span>
+<hr>
+
+
