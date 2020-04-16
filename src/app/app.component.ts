@@ -141,16 +141,16 @@ export class AppComponent implements OnInit {
 
   setGroupCheckIfCtrlChecked(ctrl: AbstractControl, group: FormGroup) {
     console.log(ctrl.value);
-    // group.valueChanges
-    //   .subscribe(_ => {
-    //     console.log('ctrl',ctrl.value, group.value)
-    //     if(group.value.options.every(o => o.checked)){
-    //       group.patchValue({ checked: true }, {emitEvent: false})
-    //     } else {
-    //       group.patchValue({ checked: false }, {emitEvent: false})
-    //     }
+    group.valueChanges
+      .subscribe(_ => {
+        console.log('ctrl',ctrl.value, group.value)
+        // if(group.value.options.every(o => o.checked)){
+        //   group.patchValue({ checked: true }, {emitEvent: false})
+        // } else {
+        //   group.patchValue({ checked: false }, {emitEvent: false})
+        // }
 
-    //   });
+      });
     // const allFalse = () =>
     //   (group.get('options') as FormArray)
     //     .controls
