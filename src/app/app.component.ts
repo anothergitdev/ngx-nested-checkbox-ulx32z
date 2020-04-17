@@ -38,6 +38,7 @@ export class AppComponent implements OnInit {
   formArray = new FormArray([]);
   mainForm: FormGroup;
   viewformArray = new FormArray([]);
+  eventOptionChange = false;
 
   mainFormResult: any;
 
@@ -67,11 +68,6 @@ export class AppComponent implements OnInit {
         .controls
         .forEach(ctrl => {
             ctrl.patchValue({checked : value});
-            // (ctrl.get('options') as FormArray)
-            //   .controls
-            //   .forEach(ctrl => {
-            //       ctrl.patchValue({checked : value});
-            //   })
         })
       }
     )
@@ -111,12 +107,6 @@ export class AppComponent implements OnInit {
       (group.get('options') as FormArray)
         .controls
         .forEach(ctrl => this.setGroupCheckIfCtrlChecked(ctrl, group));
-
-    // // When each sub control under group changes, check whether group changes
-    // (group.get(key) as FormArray)
-    //   .controls
-    //   .map(group => group.get('checked'))
-    //   .forEach(ctrl => this.setUncheckedIfChildAllFalse(ctrl, group));
     }
   }
 
@@ -124,12 +114,13 @@ export class AppComponent implements OnInit {
     if(group.value){
       (group.valueChanges as Observable<any>).pipe(
         distinctUntilChanged((x, y) => {
-          console.log('distinctUntil', group.value);
-          console.log(x.checked === y.checked, x, y);
+          // console.log('distinctUntil', group.value);
+          // console.log(x.checked === y.checked, x, y);
           return x.checked === y.checked;
         }),
       ).subscribe(val => {
-        console.log('views changed sub', val);
+        console.log('changing views options', val, 
+        this.eventOptionChange);
         (group.get('options') as FormArray)
           .controls
           .forEach(ctrl => {
@@ -143,19 +134,15 @@ export class AppComponent implements OnInit {
     console.log(ctrl.value);
     group.valueChanges
       .subscribe(_ => {
+        this.eventOptionChange = true;
         console.log('ctrl',ctrl.value, group.value)
-        // if(group.value.options.every(o => o.checked)){
-        //   group.patchValue({ checked: true }, {emitEvent: false})
-        // } else {
-        //   group.patchValue({ checked: false }, {emitEvent: false})
-        // }
+        if(group.value.options.every(o => o.checked)){
+          group.patchValue({ checked: true }, {emitEvent: false})
+        } else {
+          group.patchValue({ checked: false }, {emitEvent: false})
+        }
 
       });
-    // const allFalse = () =>
-    //   (group.get('options') as FormArray)
-    //     .controls
-    //     .map(ctrl => ctrl.get('checked').value)
-    //     .every(checked => !checked)
   }
 
 
