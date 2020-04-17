@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormArray, FormControl, FormGroup } from '@angular/forms';
 import { Observable } from 'rxjs';
-import { distinctUntilChanged, filter, take } from 'rxjs/operators';
+import { distinctUntilChanged, filter, take, map } from 'rxjs/operators';
 
 @Component({
   selector: 'my-app',
@@ -35,11 +35,8 @@ export class AppComponent implements OnInit {
     }
   ]
 
-  formArray = new FormArray([]);
   mainForm: FormGroup;
   viewformArray = new FormArray([]);
-  eventOptionChange = false;
-
   mainFormResult: any;
 
 
@@ -98,12 +95,12 @@ export class AppComponent implements OnInit {
   }
 
   setCheckConditions(group: FormGroup) {
-    // When group is true, all sub-controls are set to true
+    // When group changed, all sub-controls are set to true or false
     this.setChildIfChecked(group);
 
 
     if(group.value.options){
-      // When each sub control under group changes, check whether group changes
+      // When each sub control under group changes, change parent values.
       (group.get('options') as FormArray)
         .controls
         .forEach(ctrl => this.setGroupCheckIfCtrlChecked(ctrl, group));
@@ -111,55 +108,24 @@ export class AppComponent implements OnInit {
   }
 
   setChildIfChecked(group: FormGroup) {
-    if(group.value){
-      (group.valueChanges as Observable<any>).pipe(
-        distinctUntilChanged((x, y) => {
-          // check if option source selection changed
-          console.log(x.checked === y.checked, x, y);
-          return x.checked === y.checked;
-        }),
-        distinctUntilChanged((x, y) => {
-          // check for sibling option selection
-          const siblingSelected = 
-              (y.get('options') as FormArray)
-                .controls
-                .map(ctrl => ctrl.get('checked').value)
-                .some(checked => checked)
-          console.log(x.options.some(o=>o.checked) === y.options.some(o=>o.checked), x, y);
-          return siblingSelected;
-        }),
-      ).subscribe(val => {
-        console.log('changing views options', val, 
-        this.eventOptionChange);
-        (group.get('options') as FormArray)
+    let viewChanged = false;
+    (group.controls.checked.valueChanges as Observable<any>)
+    .pipe().subscribe(val => {
+      (group.get('options') as FormArray)
+        .controls
+        .forEach(ctrl => {
+            ctrl.patchValue({checked : val}, {emitEvent: false});
+        });
+      const siblingViewSelected = 
+        (this.mainForm.get('views') as FormArray)
           .controls
-          .forEach(ctrl => {
-              ctrl.patchValue({checked : val.checked}, {emitEvent: false});
-              const siblingSelected = 
-              (this.mainForm.get('views') as FormArray)
-                .controls
-                .map(ctrl => ctrl.get('checked').value)
-                .every(checked => checked)
-              console.log('sibling view Selected',siblingSelected);
-              this.mainForm.patchValue({ all: siblingSelected}, {emitEvent: false});
-          })
-      });
-    }
+          .map(ctrl => ctrl.get('checked').value)
+          .every(checked => checked)
+        this.mainForm.patchValue({ all: siblingViewSelected}, {emitEvent: false});
+    });
   }
 
   setGroupCheckIfCtrlChecked(ctrl: AbstractControl, group: FormGroup) {
-    console.log(ctrl.value);
-    // group.valueChanges
-    //   .subscribe(_ => {
-    //     this.eventOptionChange = true;
-    //     console.log('ctrl',ctrl.value, group.value)
-    //     if(group.value.options.every(o => o.checked)){
-    //       group.patchValue({ checked: true }, {emitEvent: false})
-    //     } else {
-    //       group.patchValue({ checked: false }, {emitEvent: false})
-    //     }
-
-    //   });
     const anyFalse = () =>
       (group.get('options') as FormArray)
         .controls
@@ -175,7 +141,7 @@ export class AppComponent implements OnInit {
     ctrl.valueChanges.pipe(
       filter((item: any) => !item.checked),
       filter(anyFalse)
-    ).subscribe(_ => {
+    ).subscribe(val => {
       group.patchValue({ checked: false}, {emitEvent: false});
       this.mainForm.patchValue({ all: false}, {emitEvent: false});
     });
@@ -183,14 +149,13 @@ export class AppComponent implements OnInit {
     ctrl.valueChanges.pipe(
       filter((item: any) => item.checked),
       filter(allTrue)
-    ).subscribe(_ => {
-      group.patchValue({ checked: true});
+    ).subscribe(val => {
+      group.patchValue({ checked: true}, {emitEvent: false});
       const siblingSelected = 
       (this.mainForm.get('views') as FormArray)
         .controls
         .map(ctrl => ctrl.get('checked').value)
         .every(checked => checked)
-      console.log('siblingSelected',siblingSelected);
       if(siblingSelected){
       this.mainForm.patchValue({ all: true}, {emitEvent: false});
       }
