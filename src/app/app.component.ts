@@ -114,9 +114,19 @@ export class AppComponent implements OnInit {
     if(group.value){
       (group.valueChanges as Observable<any>).pipe(
         distinctUntilChanged((x, y) => {
-          // console.log('distinctUntil', group.value);
-          // console.log(x.checked === y.checked, x, y);
+          // check if option source selection changed
+          console.log(x.checked === y.checked, x, y);
           return x.checked === y.checked;
+        }),
+        distinctUntilChanged((x, y) => {
+          // check for sibling option selection
+          const siblingSelected = 
+              (y.get('options') as FormArray)
+                .controls
+                .map(ctrl => ctrl.get('checked').value)
+                .some(checked => checked)
+          console.log(x.options.some(o=>o.checked) === y.options.some(o=>o.checked), x, y);
+          return siblingSelected;
         }),
       ).subscribe(val => {
         console.log('changing views options', val, 
@@ -125,6 +135,13 @@ export class AppComponent implements OnInit {
           .controls
           .forEach(ctrl => {
               ctrl.patchValue({checked : val.checked}, {emitEvent: false});
+              const siblingSelected = 
+              (this.mainForm.get('views') as FormArray)
+                .controls
+                .map(ctrl => ctrl.get('checked').value)
+                .every(checked => checked)
+              console.log('sibling view Selected',siblingSelected);
+              this.mainForm.patchValue({ all: siblingSelected}, {emitEvent: false});
           })
       });
     }
@@ -132,17 +149,52 @@ export class AppComponent implements OnInit {
 
   setGroupCheckIfCtrlChecked(ctrl: AbstractControl, group: FormGroup) {
     console.log(ctrl.value);
-    group.valueChanges
-      .subscribe(_ => {
-        this.eventOptionChange = true;
-        console.log('ctrl',ctrl.value, group.value)
-        if(group.value.options.every(o => o.checked)){
-          group.patchValue({ checked: true }, {emitEvent: false})
-        } else {
-          group.patchValue({ checked: false }, {emitEvent: false})
-        }
+    // group.valueChanges
+    //   .subscribe(_ => {
+    //     this.eventOptionChange = true;
+    //     console.log('ctrl',ctrl.value, group.value)
+    //     if(group.value.options.every(o => o.checked)){
+    //       group.patchValue({ checked: true }, {emitEvent: false})
+    //     } else {
+    //       group.patchValue({ checked: false }, {emitEvent: false})
+    //     }
 
-      });
+    //   });
+    const anyFalse = () =>
+      (group.get('options') as FormArray)
+        .controls
+        .map(ctrl => ctrl.get('checked').value)
+        .some(checked => !checked)
+    
+    const allTrue = () =>
+      (group.get('options') as FormArray)
+        .controls
+        .map(ctrl => ctrl.get('checked').value)
+        .every(checked => checked)
+
+    ctrl.valueChanges.pipe(
+      filter((item: any) => !item.checked),
+      filter(anyFalse)
+    ).subscribe(_ => {
+      group.patchValue({ checked: false}, {emitEvent: false});
+      this.mainForm.patchValue({ all: false}, {emitEvent: false});
+    });
+
+    ctrl.valueChanges.pipe(
+      filter((item: any) => item.checked),
+      filter(allTrue)
+    ).subscribe(_ => {
+      group.patchValue({ checked: true});
+      const siblingSelected = 
+      (this.mainForm.get('views') as FormArray)
+        .controls
+        .map(ctrl => ctrl.get('checked').value)
+        .every(checked => checked)
+      console.log('siblingSelected',siblingSelected);
+      if(siblingSelected){
+      this.mainForm.patchValue({ all: true}, {emitEvent: false});
+      }
+    });
   }
 
 
