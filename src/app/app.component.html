@@ -14,7 +14,7 @@
             <div formGroupName="{{vi}}">
                 <span>
                   <input  type="checkbox" formControlName="checked"/>
-                  {{ view.name }}
+                  {{ view.name }} (Any Option Selected: {{selectOptionsForm.value.views[vi].anyOptionChecked}})
                 </span>
               <!-- OPTIONS -->
               <ul formArrayName="options">
