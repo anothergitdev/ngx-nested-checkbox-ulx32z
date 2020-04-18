@@ -13,24 +13,30 @@ export class AppComponent implements OnInit {
   // main object data for dynamic form
   objData = [
     {
-      id:'v1',
+      id:'view_a',
+      name: 'A',
       options:[
         {
-          oid: 'v1_op1'
+          oid: 'option_a1',
+          name:'a1'
         },
         {
-          oid: 'v1_op2'
+          oid: 'option_a2',
+          name:'a2'
         }
       ]
     },
     {
-      id:'v2',
+      id:'view_a',
+      name: 'B',
       options:[
         {
-          oid: 'v2_op1'
+          oid: 'option_b1',
+          name:'b1'
         },
         {
-          oid: 'v2_op2'
+          oid: 'option_b2',
+          name: 'b2'
         }
       ]
     }
@@ -158,8 +164,6 @@ export class AppComponent implements OnInit {
         .some(checked => !checked)
 
     ctrl.valueChanges.subscribe(val => {
-      let options = group.value.options;
-      console.log( allTrue(), val)
       if(!val.checked && anyFalse()){
         // if any option un checked un check its parents and set anyOptionChecked false
         group.patchValue({ checked: false, anyOptionChecked: false}, {emitEvent: false});

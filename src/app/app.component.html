@@ -6,7 +6,7 @@
       <!-- MAIN -->
       <li>
         <input  type="checkbox" formControlName="all"/>
-          all
+          Select All
       </li>
       <ul formArrayName="views">
         <!-- VIEWS -->
@@ -14,7 +14,7 @@
             <div formGroupName="{{vi}}">
                 <span>
                   <input  type="checkbox" formControlName="checked"/>
-                  {{ vi + '-' + view.id }}
+                  {{ view.name }}
                 </span>
               <!-- OPTIONS -->
               <ul formArrayName="options">
@@ -22,7 +22,7 @@
                   <div formGroupName="{{oi}}">
                     <span>
                       <input type="checkbox" formControlName="checked"/>
-                      {{ oi + '-' + option.oid }}
+                      {{ option.name }}
                     </span>
                   </div>
               </ul>
