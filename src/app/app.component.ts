@@ -9,6 +9,8 @@ import { distinctUntilChanged, filter, take, map } from 'rxjs/operators';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit {
+
+  // main object data for dynamic form
   objData = [
     {
       id:'v1',
@@ -75,16 +77,21 @@ export class AppComponent implements OnInit {
     // Recursively complete all forms
     const group = new FormGroup({});
     const key = item.id || item.oid;
-    group.addControl('id', new FormControl(key));
-    group.addControl('checked', new FormControl(false));
+    if(item.id){
+      group.addControl('id', new FormControl(key));
+      group.addControl('checked', new FormControl(false));
+      // this control to show if any of its childd selected.
+      group.addControl('anyOptionChecked', new FormControl(false));
+    } else {
+      group.addControl('id', new FormControl(key));
+      group.addControl('checked', new FormControl(false));
+    }
 
-    // console.log('group in make',group.value);
     if(item.options){
       group.addControl('options', new FormArray([]));
       item.options.forEach(itemInclude => this.addToFromArray(itemInclude, group.get('options') as FormArray));
     }
 
-    // console.log('group in make',group.value);
     formArray.push(group);
 
     // Setting changed checked conditions
@@ -110,6 +117,7 @@ export class AppComponent implements OnInit {
     let viewChanged = false;
     (group.controls.checked.valueChanges as Observable<any>)
     .pipe().subscribe(val => {
+      group.patchValue({ anyOptionChecked: val}, {emitEvent: false});
       (group.get('options') as FormArray)
         .controls
         .forEach(ctrl => {
@@ -125,11 +133,11 @@ export class AppComponent implements OnInit {
   }
 
   setGroupCheckIfCtrlChecked(ctrl: AbstractControl, group: FormGroup) {
-    const anyFalse = () =>
+    const anyTrue = () =>
       (group.get('options') as FormArray)
         .controls
         .map(ctrl => ctrl.get('checked').value)
-        .some(checked => !checked)
+        .some(checked => checked)
     
     const allTrue = () =>
       (group.get('options') as FormArray)
@@ -137,31 +145,43 @@ export class AppComponent implements OnInit {
         .map(ctrl => ctrl.get('checked').value)
         .every(checked => checked)
 
-    ctrl.valueChanges.pipe(
-      filter((item: any) => !item.checked),
-      filter(anyFalse)
-    ).subscribe(val => {
-      group.patchValue({ checked: false}, {emitEvent: false});
-      this.mainForm.patchValue({ all: false}, {emitEvent: false});
-    });
-
-    ctrl.valueChanges.pipe(
-      filter((item: any) => item.checked),
-      filter(allTrue)
-    ).subscribe(val => {
-      group.patchValue({ checked: true}, {emitEvent: false});
-      const siblingSelected = 
-      (this.mainForm.get('views') as FormArray)
+    const allFalse = () =>
+      (group.get('options') as FormArray)
         .controls
         .map(ctrl => ctrl.get('checked').value)
-        .every(checked => checked)
-      if(siblingSelected){
-      this.mainForm.patchValue({ all: true}, {emitEvent: false});
+        .every(checked => !checked)
+
+    const anyFalse = () =>
+      (group.get('options') as FormArray)
+        .controls
+        .map(ctrl => ctrl.get('checked').value)
+        .some(checked => !checked)
+
+    ctrl.valueChanges.subscribe(val => {
+      let options = group.value.options;
+      console.log( allTrue(), val)
+      if(!val.checked && anyFalse()){
+        // if any option un checked un check its parents and set anyOptionChecked false
+        group.patchValue({ checked: false, anyOptionChecked: false}, {emitEvent: false});
+        this.mainForm.patchValue({ all: false}, {emitEvent: false});
+      } else if(val.checked && allTrue()) {
+        // if all option checked check its parents
+        group.patchValue({ checked: true, anyOptionChecked: true}, {emitEvent: false});
+        const siblingSelected = 
+        (this.mainForm.get('views') as FormArray)
+          .controls
+          .map(ctrl => ctrl.get('checked').value)
+          .every(checked => checked)
+        if(siblingSelected){
+        this.mainForm.patchValue({ all: true}, {emitEvent: false});
+        }
+      } else if(val.checked && anyTrue()) {
+        // if any option checked check its parent anyOPtionSelected true
+        group.patchValue({ anyOptionChecked: true}, {emitEvent: false});
+      } else if(!val.checked && allFalse()) {
+        // if all option un checked un check its parent anyOPtionSelected false
+        group.patchValue({ anyOptionChecked: false}, {emitEvent: false});
       }
     });
   }
-
-
-
-
 }
