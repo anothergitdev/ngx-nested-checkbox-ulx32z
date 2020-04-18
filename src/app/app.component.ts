@@ -9,7 +9,6 @@ import { distinctUntilChanged, filter, take, map } from 'rxjs/operators';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit {
-  count = 0;
   objData = [
     {
       id:'v1',
