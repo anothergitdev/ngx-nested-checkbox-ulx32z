@@ -46,7 +46,7 @@ export class AppComponent implements OnInit {
 
     this.mainForm.valueChanges.subscribe(
       value => {
-        this.mainFormResult = value.views.map(view => view.options).flat().map(option => {
+        this.mainFormResult = value.views.map(view => view.options).flat().filter(o=>o.checked).map(option => {
           if(option.checked){
             return option.id;
           }
