@@ -42,19 +42,19 @@ export class AppComponent implements OnInit {
     }
   ]
 
-  mainForm: FormGroup;
+  selectOptionsForm: FormGroup;
   viewformArray = new FormArray([]);
-  mainFormResult: any;
+  selectOptionsFormResult: any;
 
 
   ngOnInit() {
-    this.mainForm = new FormGroup({
+    this.selectOptionsForm = new FormGroup({
       all: new FormControl(false)
     });
 
-    this.mainForm.valueChanges.subscribe(
+    this.selectOptionsForm.valueChanges.subscribe(
       value => {
-        this.mainFormResult = value.views.map(view => view.options).flat().filter(o=>o.checked).map(option => {
+        this.selectOptionsFormResult = value.views.map(view => view.options).flat().filter(o=>o.checked).map(option => {
           if(option.checked){
             return option.id;
           }
@@ -65,10 +65,10 @@ export class AppComponent implements OnInit {
     this.objData.forEach(view => {
       this.addToFromArray(view, this.viewformArray);
     });
-    this.mainForm.addControl('views', this.viewformArray);
-    this.mainForm.controls.all.valueChanges.subscribe(
+    this.selectOptionsForm.addControl('views', this.viewformArray);
+    this.selectOptionsForm.controls.all.valueChanges.subscribe(
       value => {
-        (this.mainForm.get('views') as FormArray)
+        (this.selectOptionsForm.get('views') as FormArray)
         .controls
         .forEach(ctrl => {
             ctrl.patchValue({checked : value});
@@ -130,62 +130,79 @@ export class AppComponent implements OnInit {
             ctrl.patchValue({checked : val}, {emitEvent: false});
         });
       const siblingViewSelected = 
-        (this.mainForm.get('views') as FormArray)
+        (this.selectOptionsForm.get('views') as FormArray)
           .controls
           .map(ctrl => ctrl.get('checked').value)
           .every(checked => checked)
-        this.mainForm.patchValue({ all: siblingViewSelected}, {emitEvent: false});
+        this.selectOptionsForm.patchValue({ all: siblingViewSelected}, {emitEvent: false});
     });
   }
 
-  setGroupCheckIfCtrlChecked(ctrl: AbstractControl, group: FormGroup) {
+  setGroupCheckIfCtrlChecked(control: AbstractControl, group: FormGroup) {
     const anyTrue = () =>
-      (group.get('options') as FormArray)
-        .controls
-        .map(ctrl => ctrl.get('checked').value)
-        .some(checked => checked)
-    
+        (group.get('options') as FormArray).controls
+            .map(ctrl => ctrl.get('checked').value)
+            .some(checked => checked);
+
     const allTrue = () =>
-      (group.get('options') as FormArray)
-        .controls
-        .map(ctrl => ctrl.get('checked').value)
-        .every(checked => checked)
+        (group.get('options') as FormArray).controls
+            .map(ctrl => ctrl.get('checked').value)
+            .every(checked => checked);
 
     const allFalse = () =>
-      (group.get('options') as FormArray)
-        .controls
-        .map(ctrl => ctrl.get('checked').value)
-        .every(checked => !checked)
+        (group.get('options') as FormArray).controls
+            .map(ctrl => ctrl.get('checked').value)
+            .every(checked => !checked);
 
     const anyFalse = () =>
-      (group.get('options') as FormArray)
-        .controls
-        .map(ctrl => ctrl.get('checked').value)
-        .some(checked => !checked)
+        (group.get('options') as FormArray).controls
+            .map(ctrl => ctrl.get('checked').value)
+            .some(checked => !checked);
 
-    ctrl.valueChanges.subscribe(val => {
-      if(!val.checked && anyFalse()){
-        // if any option un checked un check its parents and set anyOptionChecked false
-        group.patchValue({ checked: false, anyOptionChecked: false}, {emitEvent: false});
-        this.mainForm.patchValue({ all: false}, {emitEvent: false});
-      } else if(val.checked && allTrue()) {
-        // if all option checked check its parents
-        group.patchValue({ checked: true, anyOptionChecked: true}, {emitEvent: false});
-        const siblingSelected = 
-        (this.mainForm.get('views') as FormArray)
-          .controls
-          .map(ctrl => ctrl.get('checked').value)
-          .every(checked => checked)
-        if(siblingSelected){
-        this.mainForm.patchValue({ all: true}, {emitEvent: false});
+    control.valueChanges.subscribe(val => {
+        if (!val.checked && anyFalse()) {
+            // if any option un checked un check its parents and set anyOptionChecked false
+            group.patchValue(
+                { checked: false },
+                { emitEvent: false }
+            );
+            this.selectOptionsForm.patchValue(
+                { all: false },
+                { emitEvent: false }
+            );
         }
-      } else if(val.checked && anyTrue()) {
-        // if any option checked check its parent anyOPtionSelected true
-        group.patchValue({ anyOptionChecked: true}, {emitEvent: false});
-      } else if(!val.checked && allFalse()) {
-        // if all option un checked un check its parent anyOPtionSelected false
-        group.patchValue({ anyOptionChecked: false}, {emitEvent: false});
-      }
+        if (!val.checked && allFalse()) {
+            // if all option un checked un check its parent anyOPtionSelected false
+            group.patchValue(
+                { anyOptionChecked: false },
+                { emitEvent: false }
+            );
+        } 
+        if (val.checked && allTrue()) {
+            // if all option checked check its parents
+            group.patchValue(
+                { checked: true, anyOptionChecked: true },
+                { emitEvent: false }
+            );
+            const siblingSelected = (this.selectOptionsForm.get(
+                'views'
+            ) as FormArray).controls
+                .map(ctrl => ctrl.get('checked').value)
+                .every(checked => checked);
+            if (siblingSelected) {
+                this.selectOptionsForm.patchValue(
+                    { all: true },
+                    { emitEvent: false }
+                );
+            }
+        }
+        if (val.checked && anyTrue()) {
+            // if any option checked check its parent anyOPtionSelected true
+            group.patchValue(
+                { anyOptionChecked: true },
+                { emitEvent: false }
+            );
+        }
     });
   }
 }

@@ -1,7 +1,7 @@
 
 <h4>Nested Form Type 1</h4>
 <div>
-  <form [formGroup]="mainForm">
+  <form [formGroup]="selectOptionsForm">
     <ul>
       <!-- MAIN -->
       <li>
@@ -32,7 +32,7 @@
   </form>
 </div>
 <hr>
-<span>{{mainForm.value | json}}</span>
+<span>{{selectOptionsForm.value | json}}</span>
 <hr>
 <span>Selected Options : {{mainFormResult | json}}</span>
 <hr>
