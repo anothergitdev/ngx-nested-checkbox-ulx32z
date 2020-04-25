@@ -1,7 +1,7 @@
 
 <h4>Nested Selection Checkbox From</h4>
 <div>
-  <form [formGroup]="selectOptionsForm">
+  <form [formGroup]="nestedSelectionForm">
     <ul>
       <!-- MAIN -->
       <li>
@@ -10,11 +10,11 @@
       </li>
       <ul formArrayName="views">
         <!-- VIEWS -->
-          <li *ngFor="let view of objData; let vi=index" >
+          <li *ngFor="let view of nestedDataset; let vi=index" >
             <div formGroupName="{{vi}}">
                 <span>
                   <input  type="checkbox" formControlName="checked"/>
-                  {{ view.name }} (Any Option of <b>{{view.name}}</b> Selected: {{selectOptionsForm.value.views[vi].anyOptionChecked}})
+                  {{ view.name }} (Any Option of <b>{{view.name}}</b> Selected: {{nestedSelectionForm.value.views[vi].anyOptionChecked}})
                 </span>
               <!-- OPTIONS -->
               <ul formArrayName="options">
@@ -32,9 +32,23 @@
   </form>
 </div>
 <hr>
-<span>Selected Options : {{selectOptionsFormResult | json}}</span>
+<span>Selected Options : {{nestedSelectionFormResult | json}}</span>
 <hr>
-<span>{{selectOptionsForm.value | json}}</span>
+
+<h4>Linear Selection Checkbox From</h4>
+<div>
+    <form [formGroup]="linearSelectionForm">
+    <ul>
+      <!-- MAIN -->
+      <li *ngFor="let item of linearDataset">
+        <input type="checkbox" [formControlName]="item.value"/>
+          {{item.name}}
+      </li>
+    </ul>
+    </form>
+</div>
+<hr>
+<span>Selected Options : {{ linearSelectionFormResult | json}}</span>
 <hr>
 
 

@@ -11,7 +11,7 @@ import { distinctUntilChanged, filter, take, map } from 'rxjs/operators';
 export class AppComponent implements OnInit {
 
   // main object data for dynamic form
-  objData = [
+  nestedDataset = [
     {
       id:'view_a',
       name: 'A',
@@ -42,39 +42,116 @@ export class AppComponent implements OnInit {
     }
   ]
 
-  selectOptionsForm: FormGroup;
+  linearDataset = [
+    { name: 'all', value: 'all'},
+    { name: 'option 1', value: 'op_1'},
+    { name: 'option 2', value: 'op_2'},
+    { name: 'option 3', value: 'op_3'}
+  ]
+
+  nestedSelectionForm: FormGroup;
   viewformArray = new FormArray([]);
-  selectOptionsFormResult: any;
+  nestedSelectionFormResult: any = [];
+
+  linearSelectionForm: FormGroup;
+  linearSelectionFormResult: any = [];
 
 
   ngOnInit() {
-    this.selectOptionsForm = new FormGroup({
-      all: new FormControl(false)
-    });
+    this.initializeNestedForm();
+    this.initializeLinearForm();
+  }
 
-    this.selectOptionsForm.valueChanges.subscribe(
-      value => {
-        this.selectOptionsFormResult = value.views.map(view => view.options).flat().filter(o=>o.checked).map(option => {
-          if(option.checked){
-            return option.id;
-          }
+  initializeLinearForm() {
+    let group = {};
+    const selectAllPropertyName = 'all';
+    this.linearDataset.forEach(item => {
+      group[item.value] = new FormControl(false);
+    });
+    this.linearSelectionForm = new FormGroup(group);
+    this.linearDataset.forEach(item => {
+      if(item.value === selectAllPropertyName){
+        this.setAllCheckedCondition(selectAllPropertyName);
+      } else {
+        this.setCtherCheckCondition(item.value, selectAllPropertyName)
+      }
+    });
+    this.linearSelectionForm.valueChanges
+      .subscribe(
+        value => {
+          var keys = Object.keys(value);
+          this.linearSelectionFormResult = keys.filter(key => value[key])
         });
-      }
-    )
+  }
 
-    this.objData.forEach(view => {
-      this.addToFromArray(view, this.viewformArray);
-    });
-    this.selectOptionsForm.addControl('views', this.viewformArray);
-    this.selectOptionsForm.controls.all.valueChanges.subscribe(
-      value => {
-        (this.selectOptionsForm.get('views') as FormArray)
-        .controls
-        .forEach(ctrl => {
-            ctrl.patchValue({checked : value});
-        })
-      }
-    )
+  setAllCheckedCondition(selectAllPropertyName: string) {
+    this.linearSelectionForm.get(selectAllPropertyName).valueChanges
+      .subscribe(
+        value => {
+          const patchObj = {}
+          this.linearDataset.forEach(option => {
+            if(option.value !== selectAllPropertyName){
+              patchObj[option.value] = value
+            }
+          })
+          this.linearSelectionForm.patchValue(patchObj, { emitEvent: false})
+        }
+      )
+
+  }
+
+  setCtherCheckCondition(ctrl: string, selectAllPropertyName: string) {
+    const otherAllTrue = () => {
+      const formValues = this.linearSelectionForm.value;
+      delete formValues[selectAllPropertyName];
+      delete formValues[ctrl];
+      return (Object.values(formValues)).every(checked => checked)
+    };
+  
+
+    this.linearSelectionForm.get(ctrl).valueChanges
+      .subscribe(
+        value => {
+          const patchObj = {};
+          if(value && otherAllTrue()){
+            patchObj[selectAllPropertyName] = true;
+          } else {
+            patchObj[selectAllPropertyName] = false;
+          }
+
+          this.linearSelectionForm.patchValue(patchObj, { emitEvent: false})
+        }
+      )
+  }
+
+  initializeNestedForm(){
+      this.nestedSelectionForm = new FormGroup({
+        all: new FormControl(false)
+      });
+
+      this.nestedSelectionForm.valueChanges.subscribe(
+        value => {
+          this.nestedSelectionFormResult = value.views.map(view => view.options).flat().filter(o=>o.checked).map(option => {
+            if(option.checked){
+              return option.id;
+            }
+          });
+        }
+      )
+
+      this.nestedDataset.forEach(view => {
+        this.addToFromArray(view, this.viewformArray);
+      });
+      this.nestedSelectionForm.addControl('views', this.viewformArray);
+      this.nestedSelectionForm.controls.all.valueChanges.subscribe(
+        value => {
+          (this.nestedSelectionForm.get('views') as FormArray)
+          .controls
+          .forEach(ctrl => {
+              ctrl.patchValue({checked : value});
+          })
+        }
+      )
   }
 
 
@@ -130,11 +207,11 @@ export class AppComponent implements OnInit {
             ctrl.patchValue({checked : val}, {emitEvent: false});
         });
       const siblingViewSelected = 
-        (this.selectOptionsForm.get('views') as FormArray)
+        (this.nestedSelectionForm.get('views') as FormArray)
           .controls
           .map(ctrl => ctrl.get('checked').value)
           .every(checked => checked)
-        this.selectOptionsForm.patchValue({ all: siblingViewSelected}, {emitEvent: false});
+        this.nestedSelectionForm.patchValue({ all: siblingViewSelected}, {emitEvent: false});
     });
   }
 
@@ -166,7 +243,7 @@ export class AppComponent implements OnInit {
                 { checked: false },
                 { emitEvent: false }
             );
-            this.selectOptionsForm.patchValue(
+            this.nestedSelectionForm.patchValue(
                 { all: false },
                 { emitEvent: false }
             );
@@ -184,13 +261,13 @@ export class AppComponent implements OnInit {
                 { checked: true, anyOptionChecked: true },
                 { emitEvent: false }
             );
-            const siblingSelected = (this.selectOptionsForm.get(
+            const siblingSelected = (this.nestedSelectionForm.get(
                 'views'
             ) as FormArray).controls
                 .map(ctrl => ctrl.get('checked').value)
                 .every(checked => checked);
             if (siblingSelected) {
-                this.selectOptionsForm.patchValue(
+                this.nestedSelectionForm.patchValue(
                     { all: true },
                     { emitEvent: false }
                 );
