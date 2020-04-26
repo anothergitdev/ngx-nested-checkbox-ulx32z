@@ -71,9 +71,9 @@ export class AppComponent implements OnInit {
     this.linearSelectionForm = new FormGroup(group);
     this.linearDataset.forEach(item => {
       if(item.value === selectAllPropertyName){
-        this.setAllCheckedCondition(selectAllPropertyName);
+        this.setAllCheckedCondition(this.linearSelectionForm, selectAllPropertyName);
       } else {
-        this.setCtherCheckCondition(item.value, selectAllPropertyName)
+        this.setCtherCheckCondition(this.linearSelectionForm, item.value, selectAllPropertyName)
       }
     });
     this.linearSelectionForm.valueChanges
@@ -84,8 +84,8 @@ export class AppComponent implements OnInit {
         });
   }
 
-  setAllCheckedCondition(selectAllPropertyName: string) {
-    this.linearSelectionForm.get(selectAllPropertyName).valueChanges
+  setAllCheckedCondition(group: FormGroup, selectAllPropertyName: string) {
+    group.get(selectAllPropertyName).valueChanges
       .subscribe(
         value => {
           const patchObj = {}
@@ -94,22 +94,22 @@ export class AppComponent implements OnInit {
               patchObj[option.value] = value
             }
           })
-          this.linearSelectionForm.patchValue(patchObj, { emitEvent: false})
+          group.patchValue(patchObj, { emitEvent: false})
         }
       )
 
   }
 
-  setCtherCheckCondition(ctrl: string, selectAllPropertyName: string) {
+  setCtherCheckCondition(group: FormGroup, ctrl: string, selectAllPropertyName: string) {
     const otherAllTrue = () => {
-      const formValues = this.linearSelectionForm.value;
+      const formValues = group.value;
       delete formValues[selectAllPropertyName];
       delete formValues[ctrl];
       return (Object.values(formValues)).every(checked => checked)
     };
   
 
-    this.linearSelectionForm.get(ctrl).valueChanges
+    group.get(ctrl).valueChanges
       .subscribe(
         value => {
           const patchObj = {};
@@ -119,7 +119,7 @@ export class AppComponent implements OnInit {
             patchObj[selectAllPropertyName] = false;
           }
 
-          this.linearSelectionForm.patchValue(patchObj, { emitEvent: false})
+          group.patchValue(patchObj, { emitEvent: false})
         }
       )
   }
